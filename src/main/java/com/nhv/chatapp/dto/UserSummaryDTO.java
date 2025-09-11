@@ -19,5 +19,4 @@ public class UserSummaryDTO {
     String avatar;
     Boolean isContact;
     Boolean isOnline;
-
 }

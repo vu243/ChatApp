@@ -77,12 +77,16 @@ public class UserServiceImpl implements UserService {
     }
 
     public UserProfileDTO getUserProfile(String userId){
+        Authentication authentication = SecurityUtils.getAuthentication();
+        User currentUser = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
         User user = this.userRepository.findById(userId).orElseThrow(() -> new BadRequestException("User not found"));
+
         return UserProfileDTO.builder()
                 .name(user.getName())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .bio(user.getBio())
+                .isContact(this.contactRepository.findByUserIdAndContactUserId(currentUser.getId(), userId) != null ? true : false)
                 .avatar(user.getAvatar()).build();
     }
 

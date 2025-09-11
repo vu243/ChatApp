@@ -5,5 +5,5 @@ import com.nhv.chatapp.entity.enums.FriendRequestStatus;
 
 public interface FriendRequestService {
     FriendRequestResponse sendFriendRequest(String userId);
-    void updateFriendRequestStatus(String userId, FriendRequestStatus status);
+    void acceptFriendRequest(String userId, FriendRequestStatus status);
 }

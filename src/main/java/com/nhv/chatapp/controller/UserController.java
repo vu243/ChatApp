@@ -77,9 +77,9 @@ public class UserController {
         return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{userId}/update-request")
-    ResponseEntity<?>  updateRequest(@PathVariable("userId") String userId, String status){
-        this.friendRequestService.updateFriendRequestStatus(userId, FriendRequestStatus.valueOf(status));
+    @PutMapping("/{userId}/accept-request")
+    ResponseEntity<?>  updateRequest(@PathVariable("userId") String userId){
+        this.friendRequestService.acceptFriendRequest(userId, FriendRequestStatus.ACCEPTED);
         APIResponse apiResponse = APIResponse.builder()
                 .message(APIResponseMessage.SUCCESSFULLY_UPDATED.name())
                 .status(HttpStatus.CREATED.value())

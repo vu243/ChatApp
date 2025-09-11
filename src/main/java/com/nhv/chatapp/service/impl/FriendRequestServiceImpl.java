@@ -67,16 +67,19 @@ public class FriendRequestServiceImpl implements FriendRequestService {
     }
 
     @Override
-    public void updateFriendRequestStatus(String userId, FriendRequestStatus status) {
+    public void acceptFriendRequest(String userId, FriendRequestStatus status) {
         Authentication authentication = SecurityUtils.getAuthentication();
         User currenUser = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        System.out.println(currenUser.getUsername());
+        System.out.println(this.userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found")).getUsername());
         Friendrequest friendrequest = this.friendRequestRepository.findByRequesterIdAndRecipientId(userId, currenUser.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Friendrequest not found"));
 
-        if(friendrequest.getRecipient().getUsername().equals(authentication.getName())) {
+        if(!friendrequest.getRecipient().getUsername().equals(authentication.getName())) {
             throw new BadRequestException("You can only update requests sent to you");
         }
-        if(friendrequest.getStatus().equals(FriendRequestStatus.PENDING)) {
+        System.out.println(friendrequest.getStatus().name());
+        if(!friendrequest.getStatus().equals(FriendRequestStatus.PENDING)) {
             throw new BadRequestException("Friend request is not pending");
         }
         friendrequest.setStatus(status);

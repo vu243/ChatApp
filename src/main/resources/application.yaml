@@ -14,6 +14,11 @@ spring:
     username: root
     password: vrain2403
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 10MB
+
 jwt:
   signerKey: "cm/Gq7l0JEeYl+VIjShBpiS/ko0DxckvG0uHK2o7c55GNIeWjJy70m57vGCgib4q"
 
@@ -24,3 +29,8 @@ logging:
         security: DEBUG
         web: DEBUG
     root: INFO
+
+cloudinary:
+  cloud-name: "dcrsia5sh"
+  api-key: 362629979878447
+  api-secret: meHypXTNOINYjJ8jXQ6q-qYEdPM

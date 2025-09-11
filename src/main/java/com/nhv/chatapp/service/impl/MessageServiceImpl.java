@@ -1,5 +1,6 @@
 package com.nhv.chatapp.service.impl;
 
+import com.cloudinary.Cloudinary;
 import com.nhv.chatapp.dto.MemberReadDTO;
 import com.nhv.chatapp.dto.MessageStatusDTO;
 import com.nhv.chatapp.dto.request.CreateChatRoomRequest;
@@ -44,8 +45,8 @@ public class MessageServiceImpl implements MessageService {
     private ChatRoomRepository chatRoomRepository;
     @Autowired
     private UserChatRoomRepository userChatRoomRepository;
-
-    private ChatRoomService chatRoomService;
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     @Override
     @Transactional
@@ -70,9 +71,16 @@ public class MessageServiceImpl implements MessageService {
                 throw new BadRequestException("Reply message must be from the same chat room");
             }
         }
-        
+        String content = messageRequest.getContent();
+        if(messageRequest.getMessageType().equals(MessageType.IMAGE.name()) && messageRequest.getImage() != null) {
+            try{
+                content = cloudinaryService.uploadImage(messageRequest.getImage());
+            }catch(Exception e){
+                throw new BadRequestException(e.getMessage());
+            }
+        }
         Message message = Message.builder()
-                .content(messageRequest.getContent())
+                .content(content)
                 .sender(currentUser)
                 .chatRoom(chatroom)
                 .replyTo(replyToMessage)

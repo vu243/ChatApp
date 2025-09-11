@@ -33,7 +33,7 @@ public class Contact {
     @Lob
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private ContactStatus status = ContactStatus.ACTIVE;
+    private ContactStatus status;
 
     @Column(name = "createAt", nullable = false)
     private Instant createAt;
@@ -47,6 +47,7 @@ public class Contact {
             this.createAt = Instant.now();
         }
         this.updateAt = Instant.now();
+        this.status = ContactStatus.ACTIVE;
     }
     @PreUpdate
     public void preUpdate() {

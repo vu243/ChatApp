@@ -14,7 +14,7 @@ public class UserProfileDTO {
     String name;
     String username;
     String email;
-    String status;
     String bio;
     String avatar;
+    boolean isContact;
 }

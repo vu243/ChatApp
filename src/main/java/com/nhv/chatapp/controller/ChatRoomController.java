@@ -10,6 +10,7 @@ import com.nhv.chatapp.service.MessageService;
 import com.nhv.chatapp.utils.FilterUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -41,8 +42,8 @@ public class ChatRoomController {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
-    @PostMapping("/{chatRoomId}/send-message")
-    ResponseEntity<?> sendMessage(@RequestBody SendMessageRequest sendMessageRequest, @PathVariable String chatRoomId){
+    @PostMapping(value = "/{chatRoomId}/send-message", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ResponseEntity<?> sendMessage(@ModelAttribute SendMessageRequest sendMessageRequest, @PathVariable String chatRoomId){
         APIResponse apiResponse = APIResponse.builder()
                 .message(APIResponseMessage.SUCCESSFULLY_CREATED.name())
                 .result(this.messageService.sendMessage(sendMessageRequest, chatRoomId))
