@@ -42,7 +42,7 @@ public class User {
     private Boolean online;
 
     @Column(name = "lastSeen")
-    private Double lastSeen;
+    private Instant lastSeen;
 
     @ColumnDefault("0")
     @Column(name = "isVerified")
@@ -60,6 +60,7 @@ public class User {
             this.createAt = Instant.now();
         }
         this.updateAt = Instant.now();
+        this.online = false;
     }
 
     @PreUpdate

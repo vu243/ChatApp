@@ -10,6 +10,8 @@ import java.util.List;
 public interface ChatRoomService {
     ChatRoomResponse createChatRoom(CreateChatRoomRequest createChatRoomRequest);
     List<ChatRoomResponse> getChatRooms();
+    List<ChatRoomResponse> getChatRooms(String type, String keyword);
     List<ChatRoomMemberDTO> addMemberToChatRoom(String chatRoomId, AddMemberRequest addMemberRequest);
     List<ChatRoomMemberDTO> getChatRoomMembers(String chatRoomId);
+    ChatRoomResponse getChatRoomId(String userId_1, String userId_2);
 }

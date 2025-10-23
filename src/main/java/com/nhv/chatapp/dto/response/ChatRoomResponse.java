@@ -2,6 +2,7 @@ package com.nhv.chatapp.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.nhv.chatapp.dto.ChatRoomMemberDTO;
+import com.nhv.chatapp.dto.UserProfileDTO;
 import com.nhv.chatapp.entity.enums.RoomType;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,9 +23,10 @@ public class ChatRoomResponse {
     private String createdBy;
     private Instant createdAt;
     private Instant updatedAt;
-    private int memberCount;
+    private Integer memberCount;
     private MessageResponse lastMessage;
     private List<ChatRoomMemberDTO> members;
+    private UserProfileDTO member;
 //    private boolean isMuted;
 //    private boolean isPinned;
 }

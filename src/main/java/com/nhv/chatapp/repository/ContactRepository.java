@@ -22,7 +22,16 @@ public interface ContactRepository extends JpaRepository<Contact, String> {
     Set<String> findAcceptedFriendIds(@Param("currentUserId") String currentUserId,
                                       @Param("userIds") List<String> userIds);
 
-    List<Contact> findByUserId(String userId);
+    @Query("SELECT c FROM Contact c " +
+            "WHERE c.user.id = :userId " +
+            "AND (:keyword IS NULL OR LOWER(c.contactUser.name) LIKE LOWER(CONCAT('%', :keyword, '%')))")
+    List<Contact> findByUserIdAndContactUserNameContainingIgnoreCase(@Param("userId") String userId,
+                                 @Param("keyword") String keyword);
+
+    @Query("SELECT c.contactUser.username FROM Contact c " +
+            "WHERE c.user.id = :userId AND c.status = 'ACTIVE'")
+    List<String> findFriendUsernames(@Param("userId") String userId);
+
     Contact findByUserIdAndContactUserId(String userId, String contactUserId);
 
     @Query("SELECT c FROM Contact c WHERE c.user.id = :userId AND c.contactUser.id IN :contactUserIds")

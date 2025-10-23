@@ -1,6 +1,7 @@
 package com.nhv.chatapp.service.impl;
 
 import com.nhv.chatapp.dto.ChatRoomMemberDTO;
+import com.nhv.chatapp.dto.UserProfileDTO;
 import com.nhv.chatapp.dto.request.AddMemberRequest;
 import com.nhv.chatapp.dto.request.CreateChatRoomRequest;
 import com.nhv.chatapp.dto.response.ChatRoomResponse;
@@ -60,7 +61,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
                             .orElseThrow(() -> new BadRequestException("Recipient not found")))
                     .orElseThrow(() -> new ResourceNotFoundException("User not found"));
             if (this.chatRoomRepository.existsPrivateChatroomByUserIds(currentUser.getId(), recipient.getId())) {
-                return null;
+                throw new BadRequestException("Private chatroom already exists");
             }
         }else if (!isPrivate) {
             if (createChatRoomRequest.getGroupName() == null || createChatRoomRequest.getGroupName().trim().isEmpty()) {
@@ -72,7 +73,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         Chatroom chatRoom = Chatroom.builder()
                 .type(roomType)
                 .groupName(!isPrivate ? createChatRoomRequest.getGroupName() : recipient.getName())
-                .groupAvatar(!isPrivate ? "abc" : recipient.getAvatar())
+                .groupAvatar(!isPrivate ? "https://res.cloudinary.com/dcrsia5sh/image/upload/v1758529252/group-profile-avatar-icon-default-social-media-forum-profile-photo-vector_fwzlht.jpg" : recipient.getAvatar())
                 .createdBy(currentUser)
                 .build();
         chatRoom = this.chatRoomRepository.save(chatRoom);
@@ -110,6 +111,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public List<ChatRoomResponse> getChatRooms() {
         Authentication authentication = SecurityUtils.getAuthentication();
         User currentUser = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         List<Userchatroom> userchatrooms = this.userChatRoomRepository.findByUserIdOrderByJoinedAtDesc(currentUser.getId());
         List<String> privateRoomIds = userchatrooms.stream()
                 .filter(ucr -> ucr.getChatRoom().getType()==RoomType.PRIVATE)
@@ -140,9 +142,21 @@ public class ChatRoomServiceImpl implements ChatRoomService {
 
                     String chatRoomName;
                     String chatRoomAvatar;
+                    String memberId = null;
+                    UserProfileDTO userProfileDTO = null;
+                    if(otherMemberId.contains(chatroom.getId())) {
+                        memberId = otherMembersMap.get(chatroom.getId()).getId();
+                    }
                     if(chatroom.getType()==RoomType.PRIVATE) {
                         User otherMember = otherMembersMap.get(chatroom.getId());
                         if(otherMember != null) {
+                            memberId = otherMember.getId();
+                            User userz = this.userRepository.findById(memberId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                            userProfileDTO = UserProfileDTO.builder()
+                                    .id(userz.getId())
+                                    .lastSeen(userz.getLastSeen())
+                                    .isOnline(userz.getOnline())
+                                    .build();
                             chatRoomAvatar = otherMember.getAvatar();
                             Contact contact = contactMap.get(otherMember.getId());
                             if(contact != null && contact.getAlias() != null) {
@@ -180,8 +194,41 @@ public class ChatRoomServiceImpl implements ChatRoomService {
                             .roomType(chatroom.getType())
                             .updatedAt(chatroom.getUpdateAt())
                             .memberCount(memberCount)
+                            .member(userProfileDTO)
                             .build();
                 }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ChatRoomResponse> getChatRooms(String type, String keyword) {
+        Authentication authentication = SecurityUtils.getAuthentication();
+        User currentUser = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if(type == null && (type.equals(RoomType.PUBLIC.name()) || type.equals(RoomType.PRIVATE.name()))) {
+            throw new BadRequestException("RoomType not found");
+        }
+        List<Userchatroom> userchatrooms = this.userChatRoomRepository.findByUserIdAndRoomType(currentUser.getId(), RoomType.PUBLIC, keyword);
+        return userchatrooms.stream().map(
+                userchatroom ->{
+                    Chatroom chatroom = userchatroom.getChatRoom();
+                    int memberCount = this.userChatRoomRepository.countByChatRoomId(chatroom.getId());
+                    return ChatRoomResponse.builder()
+                            .chatRoomId(chatroom.getId())
+                            .chatRoomName(chatroom.getGroupName())
+                            .chatRoomAvatar(chatroom.getGroupAvatar())
+                            .roomType(RoomType.PUBLIC)
+                            .updatedAt(chatroom.getUpdateAt())
+                            .memberCount(memberCount)
+                            .lastMessage(chatroom.getLastMessage() != null ? MessageResponse.builder()
+                                    .messageId(chatroom.getLastMessage().getId())
+                                    .content(chatroom.getLastMessage().getContent())
+                                    .senderName(chatroom.getLastMessage().getSender().getName())
+                                    .sentAt(chatroom.getLastMessage().getSentAt())
+                                    .messageType(chatroom.getLastMessage().getType().name())
+                                    .isLastRead(chatroom.getLastMessage() != null && userchatroom.getLastReadMessage().getId().equals(chatroom.getLastMessage().getId()) ? true : false)
+                                    .build() : null)
+                            .build();
+                }
+        ).collect(Collectors.toList());
     }
 
     @Override
@@ -201,26 +248,20 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         List<User> member = this.userRepository.findAllById(addMemberRequest.getMemberIds());
         Map<String, User> memberIds = member.stream().collect(Collectors.toMap(User::getId, user -> user));
 
-        //Get all member id in this chatroom(
         Set<String> existingMemberIds = this.userChatRoomRepository.findUserIdsByChatRoomId(chatRoomId, addMemberRequest.getMemberIds());
-
-        //Get all active contact of current user
         Set<String> contacts = this.contactRepository.findAcceptedFriendIds(currentUser.getId(), addMemberRequest.getMemberIds());
 
         List<ChatRoomMemberDTO> addedMembers = new ArrayList<>();
         List<Userchatroom> userchatrooms = new ArrayList<>();
         for (String id : addMemberRequest.getMemberIds()) {
-            //Checking friend contact
             if(!contacts.contains(id)) {
                 throw new BadRequestException("You must be friends with this user to add them to the group");
             }
 
-            //Checking member is not null
             if (memberIds.get(id) == null) {
                 throw new BadRequestException("User id not found");
             }
 
-            //Checking user is not a member of chatroom
             if (existingMemberIds.contains(id)) {
                 throw new BadRequestException("User id already a member of chat room");
             }
@@ -255,5 +296,12 @@ public class ChatRoomServiceImpl implements ChatRoomService {
                 .name(ucr.getUser().getName())
                 .roomRole(ucr.getRole().name())
                 .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public ChatRoomResponse getChatRoomId(String username1, String username2) {
+        return ChatRoomResponse.builder()
+                .chatRoomId(this.chatRoomRepository.findChatroomIdByUserPair(username1, username2).orElseThrow(() -> new ResourceNotFoundException("Chat room not found")))
+                .build();
     }
 }

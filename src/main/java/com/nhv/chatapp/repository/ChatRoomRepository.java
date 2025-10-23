@@ -24,5 +24,17 @@ public interface ChatRoomRepository extends JpaRepository<Chatroom, String> {
             @Param("userId2") String userId2
     );
 
+    @Query("""
+       SELECT c.id
+          FROM Chatroom c
+          JOIN Userchatroom uc1 ON c.id = uc1.chatRoom.id
+          JOIN User u1 ON uc1.user.id = u1.id
+          JOIN Userchatroom uc2 ON c.id = uc2.chatRoom.id
+          JOIN User u2 ON uc2.user.id = u2.id
+          WHERE u1.username = :username1
+            AND u2.username = :username2
+            AND c.type = 'PRIVATE'
+    """)
+    Optional<String> findChatroomIdByUserPair(@Param("username1") String username1, @Param("username2") String username2);
 
 }

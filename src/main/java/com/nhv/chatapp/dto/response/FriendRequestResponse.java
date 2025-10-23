@@ -12,10 +12,13 @@ import java.time.Instant;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FriendRequestResponse {
+    private String id;
     private String requesterId;
-    private String requesterUsername;
+    private String requesterName;
+    private String requesterAvatar;
     private String recipientId;
-    private String recipientUsername;
+    private String recipientName;
+    private String recipientAvatar;
     private String status;
     private Instant createdAt;
     private Instant updatedAt;

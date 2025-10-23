@@ -23,17 +23,18 @@ public class ContactServiceImpl implements ContactService {
     @Autowired
     private ContactRepository contactRepository;
     @Override
-    public ContactsResponse getContacts() {
+    public ContactsResponse getContacts(String keyword) {
         Authentication authentication = SecurityUtils.getAuthentication();
         User currentUser = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        List<Contact> contacts = this.contactRepository.findByUserId(currentUser.getId());
+        List<Contact> contacts = this.contactRepository.findByUserIdAndContactUserNameContainingIgnoreCase(currentUser.getId(), keyword);
         List<ContactDTO> contactInfos = contacts.stream()
                 .map(contact -> {
                     User contactUser = contact.getUser().getId().equals(currentUser.getId())
                             ? contact.getContactUser() : contact.getUser();
                     return ContactDTO.builder()
                             .contactId(contact.getId())
+                            .userId(contactUser.getId())
                             .username(contactUser.getUsername())
                             .name(contactUser.getName())
                             .avatar(contactUser.getAvatar())

@@ -19,6 +19,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 public class FriendRequestServiceImpl implements FriendRequestService {
     @Autowired
@@ -58,9 +62,9 @@ public class FriendRequestServiceImpl implements FriendRequestService {
 
         return FriendRequestResponse.builder()
                 .requesterId(currentUser.getId())
-                .requesterUsername(currentUser.getUsername())
+                .requesterName(currentUser.getName())
                 .recipientId(recipient.getId())
-                .recipientUsername(recipient.getUsername())
+                .recipientName(recipient.getName())
                 .status(friendrequest.getStatus().name())
                 .createdAt(friendrequest.getCreateAt())
                 .build();
@@ -96,6 +100,58 @@ public class FriendRequestServiceImpl implements FriendRequestService {
             this.contactRepository.save(requester);
             this.contactRepository.save(recipient);
         }
+    }
+
+    @Override
+    public List<FriendRequestResponse> getRequesters() {
+        Authentication authentication =  SecurityUtils.getAuthentication();
+        User user = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        List<Friendrequest> requesters = this.friendRequestRepository.findByRecipientIdAndStatus(user.getId(), FriendRequestStatus.PENDING);
+        return requesters.stream().map(requester -> FriendRequestResponse.builder()
+                .id(requester.getId())
+                .recipientId(user.getId())
+                .recipientName(user.getName())
+                .recipientAvatar(user.getAvatar())
+                .requesterId(requester.getRequester().getId())
+                .requesterName(requester.getRequester().getName())
+                .requesterAvatar(requester.getRequester().getAvatar())
+                .createdAt(requester.getCreateAt())
+                .status(requester.getStatus().name())
+                .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FriendRequestResponse> getRecipients() {
+        Authentication authentication =  SecurityUtils.getAuthentication();
+        User user = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        List<Friendrequest> recipients = this.friendRequestRepository.findByRequesterIdAndStatus(user.getId(), FriendRequestStatus.PENDING);
+        return recipients.stream().map(recipient -> FriendRequestResponse.builder()
+                .id(recipient.getId())
+                .requesterId(user.getId())
+                .requesterName(user.getName())
+                .requesterAvatar(user.getAvatar())
+                .recipientId(recipient.getRecipient().getId())
+                .recipientName(recipient.getRecipient().getName())
+                .recipientAvatar(recipient.getRecipient().getAvatar())
+                .createdAt(recipient.getCreateAt())
+                .status(recipient.getStatus().name())
+                .build()).collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteFriendRequest(String userId) {
+        Authentication authentication =  SecurityUtils.getAuthentication();
+        User currentUser  = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = this.userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Optional<Friendrequest> friendrequest= this.friendRequestRepository.findByRequesterIdAndRecipientId(currentUser.getId(), user.getId());
+        if(friendrequest.isPresent()) {
+            this.friendRequestRepository.delete(friendrequest.get());
+        }
+        else{
+            friendrequest = this.friendRequestRepository.findByRequesterIdAndRecipientId(user.getId(), currentUser.getId());
+            friendrequest.ifPresent(this.friendRequestRepository::delete);
+        }
+
     }
 
 

@@ -37,6 +37,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BadCredentialsException("Email is already exists");
         }
         user.setUsername(registerRequest.getUsername());
+        user.setAvatar("https://res.cloudinary.com/dcrsia5sh/image/upload/v1758529587/avatar-facebook-1280x720_p4insi.jpg");
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setEmail(registerRequest.getEmail());
         user.setName(registerRequest.getName());

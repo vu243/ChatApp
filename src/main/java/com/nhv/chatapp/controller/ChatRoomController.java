@@ -5,6 +5,7 @@ import com.nhv.chatapp.dto.request.CreateChatRoomRequest;
 import com.nhv.chatapp.dto.request.SendMessageRequest;
 import com.nhv.chatapp.dto.response.APIResponse;
 import com.nhv.chatapp.dto.response.APIResponseMessage;
+import com.nhv.chatapp.dto.response.ChatRoomResponse;
 import com.nhv.chatapp.service.ChatRoomService;
 import com.nhv.chatapp.service.MessageService;
 import com.nhv.chatapp.utils.FilterUtils;
@@ -13,6 +14,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/chatrooms")
@@ -32,11 +35,29 @@ public class ChatRoomController {
         return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
     }
 
-    @GetMapping
-    ResponseEntity<?> getChatrooms(){
+    @GetMapping("/id")
+    ResponseEntity<?> getChatroomId(@RequestParam String username1, @RequestParam String username2) {
         APIResponse apiResponse = APIResponse.builder()
                 .message(APIResponseMessage.SUCCESSFULLY_RETRIEVED.name())
-                .result(this.chatRoomService.getChatRooms())
+                .result(this.chatRoomService.getChatRoomId(username1, username2))
+                .status(HttpStatus.OK.value())
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @GetMapping
+    ResponseEntity<?> getChatrooms(@RequestParam(value = "type", required = false) String type,
+                                   @RequestParam(value = "keyword", required = false) String keyword){
+        List<ChatRoomResponse> chatRooms;
+        if(type == null){
+            chatRooms = this.chatRoomService.getChatRooms();
+        }
+        else {
+            chatRooms = this.chatRoomService.getChatRooms(type, keyword);
+        }
+        APIResponse apiResponse = APIResponse.builder()
+                .message(APIResponseMessage.SUCCESSFULLY_RETRIEVED.name())
+                .result(chatRooms)
                 .status(HttpStatus.OK.value())
                 .build();
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
