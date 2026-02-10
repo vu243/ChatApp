@@ -46,6 +46,7 @@ public class UserServiceImpl implements UserService {
     @Autowired
     FriendRequestRepository friendRequestRepository;
     SimpMessagingTemplate simpMessagingTemplate;
+    CloudinaryService cloudinaryService;
 
     @Override
     public PageResponse<UserProfileDTO> getUsers(String keyword, int page, int size) {
@@ -118,16 +119,31 @@ public class UserServiceImpl implements UserService {
                 .avatar(user.getAvatar()).build();
     }
 
-    public UserProfileDTO updateUser(String userId, UserProfileDTO userProfileDTO){
-        User user = this.userRepository.findById(userId).orElseThrow(() -> new BadRequestException("User not found"));
-        user = User.builder()
+    public UserProfileDTO updateUser(UserProfileDTO userProfileDTO){
+        Authentication authentication = SecurityUtils.getAuthentication();
+        User user = this.userRepository.findByUsername(authentication.getName()).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        if (userProfileDTO.getName() != null && !userProfileDTO.getName().trim().isEmpty()) {
+            user.setName(userProfileDTO.getName());
+        }
+
+        if (userProfileDTO.getBio() != null) {
+            user.setBio(userProfileDTO.getBio());
+        }
+
+        if (userProfileDTO.getImage() != null && !userProfileDTO.getImage().isEmpty()) {
+            String avatar = cloudinaryService.uploadImage(userProfileDTO.getImage());
+            user.setAvatar(avatar);
+        }
+        user = this.userRepository.save(user);
+        return UserProfileDTO.builder()
+                .id(user.getId())
                 .name(user.getName())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .bio(user.getBio())
-                .avatar(user.getAvatar()).build();
-        this.userRepository.save(user);
-        return userProfileDTO;
+                .avatar(user.getAvatar())
+                .isOnline(user.getOnline())
+                .build();
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.nhv.chatapp.service.FriendRequestService;
 import com.nhv.chatapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -50,11 +51,11 @@ public class UserController {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
-    @PutMapping("/{userId}")
-    ResponseEntity<?> updateUser(@PathVariable("userId") String userId, @RequestBody UserProfileDTO userUpdateDTO){
+    @PutMapping(value = "/update-profile",  consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ResponseEntity<?> updateUser(@ModelAttribute UserProfileDTO userUpdateDTO){
         APIResponse apiResponse = APIResponse.builder()
                 .message(APIResponseMessage.SUCCESSFULLY_UPDATED.name())
-                .result(this.userService.getUserProfile(userId))
+                .result(this.userService.updateUser(userUpdateDTO))
                 .status(HttpStatus.OK.value()).build();
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
@@ -85,5 +86,15 @@ public class UserController {
                 .status(HttpStatus.CREATED.value())
                 .build();
         return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
+    }
+
+    @DeleteMapping("/{userId}/delete-request")
+    ResponseEntity<?> deleteRequest(@PathVariable("userId") String userId){
+        this.friendRequestService.deleteFriendRequest(userId);
+        APIResponse apiResponse = APIResponse.builder()
+                .message(APIResponseMessage.SUCCESSFULLY_DELETED.name())
+                .status(HttpStatus.NO_CONTENT.value())
+                .build();
+        return new ResponseEntity<>(apiResponse, HttpStatus.NO_CONTENT);
     }
 }

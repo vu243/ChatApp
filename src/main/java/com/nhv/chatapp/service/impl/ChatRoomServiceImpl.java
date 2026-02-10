@@ -18,6 +18,7 @@ import com.nhv.chatapp.repository.*;
 import com.nhv.chatapp.service.ChatRoomService;
 import com.nhv.chatapp.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     private UserChatRoomRepository userChatRoomRepository;
     @Autowired
     private ContactRepository contactRepository;
-
+    private SimpMessagingTemplate simpMessagingTemplate;
 
     @Override
     public ChatRoomResponse createChatRoom(CreateChatRoomRequest createChatRoomRequest) {
@@ -105,6 +106,13 @@ public class ChatRoomServiceImpl implements ChatRoomService {
                 .createdAt(chatRoom.getCreateAt())
                 .members(chatRoomMembers)
                 .build();
+    }
+
+    public void broadcastToMembers(List<String> memberIds, String chatRoomId, ChatRoomResponse chatRoomResponse) {
+        List<String> memberUsernames = this.userRepository.findUsernamesByIds(memberIds);
+        for (String memberUsername : memberUsernames) {
+            simpMessagingTemplate.convertAndSend("/topic/members/" + chatRoomId + "/" + memberUsernames);
+        }
     }
 
     @Override

@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 
@@ -27,4 +28,5 @@ public class UserProfileDTO {
     Instant lastSeen;
     Boolean isRequester;
     Boolean isRecipient;
+    MultipartFile image;
 }

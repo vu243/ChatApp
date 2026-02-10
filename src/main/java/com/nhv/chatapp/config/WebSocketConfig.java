@@ -35,15 +35,13 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final JWTService jwtService;
 
-    @PostConstruct
-    public void init() {
-        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-    }
+
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.enableSimpleBroker("/topic");
         registry.setApplicationDestinationPrefixes("/app");
+        registry.setUserDestinationPrefix("/user");
     }
 
     @Override
@@ -66,10 +64,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                         try {
                             username = jwtService.extractUsername(token);
                             if(username != null) {
-                                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+                                UsernamePasswordAuthenticationToken authentication =
+                                        new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
                                 accessor.setUser(authentication);
                                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                                System.out.println(SecurityContextHolder.getContext().getAuthentication().getName()+ "hehehehe");
                             }
                             else {
                                 throw new RuntimeException("Invalid token");
@@ -85,14 +83,22 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     else  {
                         throw new RuntimeException("Missing Bearer Token");
                     }
-                }else if(StompCommand.DISCONNECT == accessor.getCommand()) {
-
                 }
-                if (StompCommand.SUBSCRIBE == accessor.getCommand() || StompCommand.SEND == accessor.getCommand()) {
+                // ✅ HANDLE DISCONNECT
+                else if(StompCommand.DISCONNECT == accessor.getCommand()) {
+                    Principal user = accessor.getUser();
+                    if(user instanceof UsernamePasswordAuthenticationToken) {
+
+                        SecurityContextHolder.getContext().setAuthentication((UsernamePasswordAuthenticationToken) user);
+
+                    }
+                }
+                else if (StompCommand.SUBSCRIBE == accessor.getCommand()
+                        || StompCommand.SEND == accessor.getCommand()
+                        || StompCommand.UNSUBSCRIBE == accessor.getCommand()) {
                     Principal user = accessor.getUser();
                     if(user instanceof UsernamePasswordAuthenticationToken) {
                         SecurityContextHolder.getContext().setAuthentication((UsernamePasswordAuthenticationToken) user);
-                        System.out.println(SecurityContextHolder.getContext().getAuthentication().getName()+ "hehehehe");
                     }
                 }
                 return message;

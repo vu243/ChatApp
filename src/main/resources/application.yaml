@@ -22,6 +22,7 @@ spring:
 jwt:
   signerKey: "cm/Gq7l0JEeYl+VIjShBpiS/ko0DxckvG0uHK2o7c55GNIeWjJy70m57vGCgib4q"
 
+
 logging:
   level:
     org:

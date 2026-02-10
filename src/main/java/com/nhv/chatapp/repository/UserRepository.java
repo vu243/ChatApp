@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -27,4 +28,7 @@ public interface UserRepository  extends JpaRepository<User, String> {
             @Param("keyword") String keyword,
             @Param("currentUserId") String currentUserId,
             Pageable pageable);
+
+    @Query("SELECT u.username FROM User u WHERE u.id IN :userIds")
+    List<String> findUsernamesByIds(@Param("userIds") List<String> userIds);
 }

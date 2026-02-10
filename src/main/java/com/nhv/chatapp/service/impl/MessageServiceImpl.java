@@ -92,7 +92,6 @@
             chatroom.setLastMessage(message);
             this.chatRoomRepository.save(chatroom);
 
-            // Update lastReadMessage cho người gửi (tự động đã đọc tin nhắn của mình)
             this.updateLastReadMessage(currentUser.getId(), chatRoomId, message.getId());
             return MessageResponse.builder()
                     .messageId(message.getId())
@@ -266,4 +265,5 @@
 
             return result;
         }
+
     }

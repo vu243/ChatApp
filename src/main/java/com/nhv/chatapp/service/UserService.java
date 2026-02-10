@@ -11,7 +11,7 @@ public interface UserService {
     PageResponse<UserProfileDTO> getUsers(String keyword, int page, int size);
     UserProfileDTO getUserProfile(String userId);
     UserProfileDTO getUserProfile();
-    UserProfileDTO updateUser(String userId, UserProfileDTO user);
+    UserProfileDTO updateUser(UserProfileDTO user);
     void deleteUser(String userId);
     void setOnline();
     void setOffline();
